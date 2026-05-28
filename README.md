@@ -47,6 +47,7 @@ python -c "import nltk; nltk.download('stopwords')"
 **2. Download the dataset**
 
 Download the [Large Movie Review Dataset (aclImdb)](https://ai.stanford.edu/~amaas/data/sentiment/) and extract it so your directory looks like:
+```
 aclImdb/
 ├── imdb.vocab
 ├── imdbEr.txt
@@ -56,6 +57,7 @@ aclImdb/
 └── test/
 ├── pos/
 └── neg/
+```
 
 **3. Preprocess**
 ```bash
