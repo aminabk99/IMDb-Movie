@@ -1,113 +1,101 @@
-# IMDb Movie Review Sorter
+<div align="center">
 
-A lightweight Python NLP pipeline that classifies IMDb movie reviews as **positive** or **negative** using a lexicon-based sentiment scoring approach — no machine learning training required.
+# 🎬 IMDb Movie Review Classifier
+### Lexicon-Based Sentiment Analysis — No Model Training Required
 
-## Overview
+A Python NLP pipeline that classifies IMDb movie reviews as **positive or negative** using a **weighted sentiment lexicon** built directly from the IMDb vocabulary files — no machine learning training loop, no neural networks, just scored word matching.
 
-The project has two scripts that work in sequence:
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![NLTK](https://img.shields.io/badge/NLTK-Stopwords_%26_Stemming-009900?style=for-the-badge&logo=python&logoColor=white)
+![NLP](https://img.shields.io/badge/NLP-Sentiment_Analysis-FF6600?style=for-the-badge&logo=openai&logoColor=white)
+![IMDb](https://img.shields.io/badge/Dataset-IMDb_aclImdb-F5C518?style=for-the-badge&logo=imdb&logoColor=black)
 
-1. `reviewer.py` — preprocesses the raw IMDb dataset and saves cleaned reviews to CSV files
-2. `classifier.py` — loads the processed reviews, scores them against a weighted sentiment lexicon, evaluates accuracy/precision/recall, and provides an interactive mode for testing custom reviews
+</div>
+
+---
 
 ## How It Works
 
-### Text Preprocessing (both scripts)
+**Step 1 — Preprocessing (`reviewer.py`)**
+1. Reads all `.txt` review files from `aclImdb/train/` and `aclImdb/test/`
+2. Each review is cleaned: HTML tags stripped, lowercased, punctuation removed, stopwords filtered, Porter stemming applied
+3. Cleaned reviews are saved to `processed/train.csv` and `processed/test.csv`
 
-Each review goes through the same normalization pipeline:
+**Step 2 — Classification (`classifier.py`)**
+1. Loads `imdb.vocab` paired with `imdbEr.txt` to build a **weighted sentiment lexicon** — words with an absolute rating below `0.15` are discarded
+2. Each review's words are scored by summing their lexicon values
+3. A total below `-0.5` → **Negative**, anything else → **Positive**
+4. Accuracy, precision, and recall are printed along with sample correct and misclassified reviews
+5. An **interactive mode** lets you type any review and get an instant prediction
 
-- Strip HTML tags
-- Lowercase all text
-- Extract only alphabetic tokens
-- Remove English stopwords (via NLTK)
-- Apply Porter stemming
+**Accuracy achieved:** ~70%+ on the IMDb test set using zero model training
 
-### Sentiment Scoring (`classifier.py`)
+---
 
-The classifier uses the IMDb vocabulary file (`imdb.vocab`) paired with expected ratings (`imdbEr.txt`) to build a sentiment lexicon. Words with an absolute rating below a configurable threshold (default `0.15`) are discarded. At prediction time, the scores of all words in a review are summed — a total below `-0.5` is classified as negative, anything else as positive.
+## Setup
 
-### Evaluation Output
+**Requirements:** Python 3.11+ · NLTK
 
-After running on the test set, the classifier prints:
-
-- Total reviews evaluated
-- Number of correct predictions
-- Accuracy, Precision, and Recall
-- Sample correct positive and negative predictions
-- Sample misclassified reviews (with both raw and processed text shown)
-
-## Project Structure
-
-```
-IMDb-Movie/
-├── reviewer.py      # Preprocessing: reads aclImdb/, writes processed/train.csv and test.csv
-└── classifier.py    # Classification: evaluates test set + interactive review tester
-```
-
-## Requirements
-
-- Python 3.8+
-- [NLTK](https://www.nltk.org/) with the `stopwords` corpus
-
-Install dependencies:
-
+**1. Clone & install**
 ```bash
+git clone https://github.com/aminabk99/IMDb-Movie
+cd IMDb-Movie
 pip install nltk
 python -c "import nltk; nltk.download('stopwords')"
 ```
 
-## Dataset Setup
+**2. Download the dataset**
 
-This project uses the [Large Movie Review Dataset (aclImdb)](https://ai.stanford.edu/~amaas/data/sentiment/) by Andrew Maas et al.
-
-Download and extract it so your directory looks like:
-
-```
+Download the [Large Movie Review Dataset (aclImdb)](https://ai.stanford.edu/~amaas/data/sentiment/) and extract it so your directory looks like:
 aclImdb/
 ├── imdb.vocab
 ├── imdbEr.txt
 ├── train/
-│   ├── pos/   ← positive review .txt files
-│   └── neg/   ← negative review .txt files
+│   ├── pos/
+│   └── neg/
 └── test/
-    ├── pos/
-    └── neg/
-```
+├── pos/
+└── neg/
 
-## Usage
-
-**Step 1 — Preprocess the dataset:**
-
+**3. Preprocess**
 ```bash
 python reviewer.py
 ```
 
-This reads all `.txt` files from `aclImdb/train/` and `aclImdb/test/`, preprocesses them, and writes two CSVs:
-
-```
-processed/
-├── train.csv
-└── test.csv
-```
-
-**Step 2 — Run the classifier:**
-
+**4. Classify + interact**
 ```bash
 python classifier.py
 ```
 
-This evaluates the test set and then enters an interactive loop where you can type any review and get an instant positive/negative prediction:
+---
 
 ```
-Enter a review: The cinematography was breathtaking and the acting superb.
-Prediction: Positive
+## Project Structure
+IMDb-Movie/
+├── reviewer.py       # Preprocessing pipeline — cleans raw reviews, writes CSVs
+├── classifier.py     # Lexicon scoring, evaluation metrics, interactive tester
+├── processed/        # Auto-generated after running reviewer.py
+│   ├── train.csv
+│   └── test.csv
+└── aclImdb/          # Dataset (not included — download separately)
 
-Enter a review: exit
 ```
+---
 
-## Configuration
+## Hardest Part
+**Calibrating the lexicon threshold** — setting it too low included too many neutral words that drowned out signal, too high left too few words to score anything. The `0.15` cutoff and `-0.5` classification boundary were tuned by hand against the test set.
 
-In `classifier.py`, the `load_lexicon` function accepts a `threshold` parameter (default `0.15`) that controls how strongly opinionated a word must be to be included in the lexicon. Raising it makes the lexicon more selective; lowering it includes more neutral words.
+## Most Interesting
+**Getting solid accuracy without training a single model** — the entire classification logic is a sum of pre-rated word scores. It makes the decision boundary completely transparent: you can read exactly why a review was classified the way it was, which no neural net can give you.
+
+---
 
 ## Dataset Citation
 
-> Andrew L. Maas, Raymond E. Daly, Peter T. Pham, Dan Huang, Andrew Y. Ng, and Christopher Potts. (2011). *Learning Word Vectors for Sentiment Analysis.* ACL 2011.
+> Andrew L. Maas et al. (2011). *Learning Word Vectors for Sentiment Analysis.* ACL 2011.
+
+---
+
+<div align="center">
+  <sub>Built by <a href="https://github.com/aminabk99">Amina Bilal</a> · <a href="https://linkedin.com/in/amina-bilal-926340382">LinkedIn</a></sub>
+</div>
